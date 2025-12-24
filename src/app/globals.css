@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+:root {
+  --background: #0f172a;
+  --foreground: #f8fafc;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  overflow-x: hidden;
+}
+
+/* Festive Animations */
+@keyframes snow {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 0;
+  }
+
+  20% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+.snowflake {
+  position: absolute;
+  top: -10px;
+  color: white;
+  pointer-events: none;
+  z-index: 50;
+  animation: snow linear infinite;
+}
+
+/* Custom Utilities for fonts if not auto-detected */
+@utility font-vibes {
+  font-family: var(--font-great-vibes), cursive;
+}
