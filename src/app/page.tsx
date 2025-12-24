@@ -7,15 +7,39 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setIsUploading(true);
-      // Simulate n8n webhook call
-      setTimeout(() => {
+      setUploadMessage("");
+
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
+
+        if (!webhookUrl) {
+          throw new Error("Webhook URL not configured");
+        }
+
+        const response = await fetch(webhookUrl, {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          setUploadMessage("¡Enviado a n8n con éxito! 🎁");
+        } else {
+          setUploadMessage("Error al subir la imagen 😢");
+        }
+      } catch (error) {
+        console.error(error);
+        setUploadMessage("Error de conexión (Check Console) ⚠️");
+      } finally {
         setIsUploading(false);
-        setUploadMessage("¡Enviado a n8n con éxito! 🎁");
         setTimeout(() => setUploadMessage(""), 5000);
-      }, 2000);
+      }
     }
   };
 
@@ -69,8 +93,8 @@ export default function Home() {
                   accept="image/*"
                 />
                 <div className={`peer transition-all duration-300 rounded-xl py-4 px-6 font-bold text-lg flex items-center justify-center gap-3 shadow-lg ${isUploading
-                    ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-orange-500 text-white shadow-red-900/50'
+                  ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-orange-500 text-white shadow-red-900/50'
                   }`}>
                   {isUploading ? (
                     <>
