@@ -1,5 +1,5 @@
 {
-    "name": "Navidad Photo Album Backend",
+    "name": "Navidad Photo Album Backend (HTTP)",
     "nodes": [
         {
             "parameters": {
@@ -14,7 +14,8 @@
                             }
                         ]
                     }
-                }
+                },
+                "responseMode": "responseNode"
             },
             "type": "n8n-nodes-base.webhook",
             "typeVersion": 1,
@@ -22,89 +23,42 @@
                 0,
                 0
             ],
-            "id": "webhook-node",
+            "id": "webhook-upload",
             "name": "Webhook POST (Upload)",
             "webhookId": "144f11b2-e24c-4426-a266-b64aa37aa00d"
         },
         {
             "parameters": {
-                "httpMethod": "GET",
-                "path": "aa37aa00d",
-                "options": {
-                    "responseHeaders": {
-                        "entries": [
-                            {
-                                "name": "Access-Control-Allow-Origin",
-                                "value": "*"
-                            }
-                        ]
-                    }
-                }
-            },
-            "type": "n8n-nodes-base.webhook",
-            "typeVersion": 1,
-            "position": [
-                0,
-                200
-            ],
-            "id": "webhook-get-node",
-            "name": "Webhook GET (List)",
-            "webhookId": "144f11b2-e24c-4426-a266-b64aa37aa00d"
-        },
-        {
-            "parameters": {
-                "authentication": "oAuth2",
-                "operation": "upload",
-                "fileContent": "={{ $binary.file.data }}",
-                "parentId": {
-                    "__rl": true,
-                    "value": "YOUR_GOOGLE_DRIVE_FOLDER_ID",
-                    "mode": "id"
+                "method": "POST",
+                "url": "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+                "authentication": "predefinedCredentialType",
+                "nodeCredentialType": "googleDriveOAuth2Api",
+                "sendBody": true,
+                "contentType": "multipart-form-data",
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "metadata",
+                            "parameterType": "json",
+                            "value": "={ \"name\": \"{{ $binary.file.fileName }}\", \"parents\": [\"1A--gmLrVOdZkdypqxDSA2DJW0RZdcDC0\"] }"
+                        },
+                        {
+                            "name": "file",
+                            "parameterType": "formBinaryData",
+                            "value": "file"
+                        }
+                    ]
                 },
-                "name": "={{ $binary.file.fileName }}"
+                "options": {}
             },
-            "type": "n8n-nodes-base.googleDrive",
-            "typeVersion": 2,
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
             "position": [
                 250,
                 0
             ],
-            "id": "google-drive-upload",
-            "name": "Google Drive Upload",
-            "credentials": {
-                "googleDriveOAuth2Api": {
-                    "id": "YOUR_CREDENTIAL_ID",
-                    "name": "Google Drive account"
-                }
-            }
-        },
-        {
-            "parameters": {
-                "authentication": "oAuth2",
-                "operation": "list",
-                "folderId": {
-                    "__rl": true,
-                    "value": "YOUR_GOOGLE_DRIVE_FOLDER_ID",
-                    "mode": "id"
-                },
-                "limit": 100,
-                "options": {
-                    "fields": [
-                        "id",
-                        "name",
-                        "webContentLink",
-                        "thumbnailLink"
-                    ]
-                }
-            },
-            "type": "n8n-nodes-base.googleDrive",
-            "typeVersion": 2,
-            "position": [
-                250,
-                200
-            ],
-            "id": "google-drive-list",
-            "name": "List Files",
+            "id": "http-upload",
+            "name": "HTTP Upload",
             "credentials": {
                 "googleDriveOAuth2Api": {
                     "id": "YOUR_CREDENTIAL_ID",
@@ -127,6 +81,84 @@
         },
         {
             "parameters": {
+                "httpMethod": "GET",
+                "path": "aa37aa00d",
+                "options": {
+                    "responseHeaders": {
+                        "entries": [
+                            {
+                                "name": "Access-Control-Allow-Origin",
+                                "value": "*"
+                            }
+                        ]
+                    }
+                },
+                "responseMode": "responseNode"
+            },
+            "type": "n8n-nodes-base.webhook",
+            "typeVersion": 1,
+            "position": [
+                0,
+                200
+            ],
+            "id": "webhook-list",
+            "name": "Webhook GET (List)",
+            "webhookId": "144f11b2-e24c-4426-a266-b64aa37aa00d"
+        },
+        {
+            "parameters": {
+                "url": "https://www.googleapis.com/drive/v3/files",
+                "authentication": "predefinedCredentialType",
+                "nodeCredentialType": "googleDriveOAuth2Api",
+                "sendQuery": true,
+                "queryParameters": {
+                    "parameters": [
+                        {
+                            "name": "q",
+                            "value": "'1A--gmLrVOdZkdypqxDSA2DJW0RZdcDC0' in parents"
+                        },
+                        {
+                            "name": "fields",
+                            "value": "files(id, name, webContentLink, thumbnailLink, mimeType)"
+                        },
+                        {
+                            "name": "pageSize",
+                            "value": "1000"
+                        }
+                    ]
+                },
+                "options": {}
+            },
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 4.1,
+            "position": [
+                250,
+                200
+            ],
+            "id": "http-list",
+            "name": "HTTP List",
+            "credentials": {
+                "googleDriveOAuth2Api": {
+                    "id": "YOUR_CREDENTIAL_ID",
+                    "name": "Google Drive account"
+                }
+            }
+        },
+        {
+            "parameters": {
+                "functionCode": "// Transform Drive response to simple format\nconst images = items[0].json.files.map(file => ({\n  id: file.id,\n  name: file.name,\n  url: file.thumbnailLink ? file.thumbnailLink.replace('=s220', '=s1024') : file.webContentLink\n}));\n\nreturn { images };"
+            },
+            "type": "n8n-nodes-base.function",
+            "typeVersion": 1,
+            "position": [
+                450,
+                200
+            ],
+            "id": "transform-data",
+            "name": "Format JSON"
+        },
+        {
+            "parameters": {
                 "respondWith": "json",
                 "responseBody": "={{ $json.images }}",
                 "options": {}
@@ -139,19 +171,6 @@
             ],
             "id": "response-list",
             "name": "Response List"
-        },
-        {
-            "parameters": {
-                "functionCode": "// Transform Drive response to simple format\nconst images = items.map(item => ({\n  id: item.json.id,\n  name: item.json.name,\n  // Use thumbnailLink usually, sometimes webContentLink prompts download\n  // Replacing '=s220' in thumbnailLink gives higher res if needed\n  url: item.json.thumbnailLink ? item.json.thumbnailLink.replace('=s220', '=s1024') : item.json.webContentLink\n}));\n\nreturn { images };"
-            },
-            "type": "n8n-nodes-base.function",
-            "typeVersion": 1,
-            "position": [
-                450,
-                200
-            ],
-            "id": "transform-data",
-            "name": "Format JSON"
         }
     ],
     "connections": {
@@ -159,14 +178,14 @@
             "main": [
                 [
                     {
-                        "node": "Google Drive Upload",
+                        "node": "HTTP Upload",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "Google Drive Upload": {
+        "HTTP Upload": {
             "main": [
                 [
                     {
@@ -181,14 +200,14 @@
             "main": [
                 [
                     {
-                        "node": "List Files",
+                        "node": "HTTP List",
                         "type": "main",
                         "index": 0
                     }
                 ]
             ]
         },
-        "List Files": {
+        "HTTP List": {
             "main": [
                 [
                     {

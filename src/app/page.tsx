@@ -15,10 +15,11 @@ export default function Home() {
 
   const fetchImages = async () => {
     try {
-      const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
-      if (!webhookUrl) return;
+      // Use the LIST specific URL (GET)
+      const webhookListUrl = process.env.NEXT_PUBLIC_N8N_LIST_URL;
+      if (!webhookListUrl) return;
 
-      const res = await fetch(webhookUrl);
+      const res = await fetch(webhookListUrl);
       // We assume n8n GET webhook returns { images: [...] } or just an array
       if (res.ok) {
         const data = await res.json();
@@ -40,13 +41,14 @@ export default function Home() {
       formData.append("file", file);
 
       try {
-        const webhookUrl = process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL;
+        // Use the UPLOAD specific URL (POST)
+        const webhookUploadUrl = process.env.NEXT_PUBLIC_N8N_UPLOAD_URL;
 
-        if (!webhookUrl) {
-          throw new Error("Webhook URL not configured");
+        if (!webhookUploadUrl) {
+          throw new Error("Upload Webhook URL not configured");
         }
 
-        const response = await fetch(webhookUrl, {
+        const response = await fetch(webhookUploadUrl, {
           method: "POST",
           body: formData,
         });
