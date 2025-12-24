@@ -7,6 +7,7 @@ export default function Home() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
   const [images, setImages] = useState<{ id: string; name: string; url: string }[]>([]);
+  const [selectedImage, setSelectedImage] = useState<{ id: string; name: string; url: string } | null>(null);
 
   // Fetch images on mount
   useEffect(() => {
@@ -109,8 +110,8 @@ export default function Home() {
                 accept="image/*"
               />
               <div className={`peer transition-all duration-300 rounded-xl py-4 px-6 font-bold text-lg flex items-center justify-center gap-3 shadow-lg ${isUploading
-                  ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-orange-500 text-white shadow-red-900/50'
+                ? 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                : 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 hover:to-orange-500 text-white shadow-red-900/50'
                 }`}>
                 {isUploading ? (
                   <>
@@ -142,7 +143,11 @@ export default function Home() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {images.map((img) => (
-                <div key={img.id || Math.random()} className="aspect-[4/5] relative group overflow-hidden rounded-2xl border border-white/10 bg-slate-800/50 shadow-xl transition-all hover:-translate-y-2 hover:shadow-2xl hover:shadow-gold/20">
+                <div
+                  key={img.id || Math.random()}
+                  className="aspect-[4/5] relative group overflow-hidden rounded-2xl border border-white/10 bg-slate-800/50 shadow-xl transition-all hover:-translate-y-2 hover:shadow-2xl hover:shadow-gold/20 cursor-zoom-in"
+                  onClick={() => setSelectedImage(img)}
+                >
                   <Image
                     src={img.url}
                     alt={img.name || "Foto navideña"}
@@ -160,6 +165,45 @@ export default function Home() {
         </div>
 
       </div>
-    </main>
+
+
+      {/* Lightbox / Modal */}
+      {
+        selectedImage && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fade-in"
+            onClick={() => setSelectedImage(null)}
+          >
+            <button
+              className="absolute top-4 right-4 text-white/70 hover:text-white text-5xl transition-colors z-50"
+              onClick={() => setSelectedImage(null)}
+            >
+              &times;
+            </button>
+
+            <div
+              className="relative w-full max-w-5xl h-[80vh] flex flex-col items-center justify-center"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="relative w-full h-full rounded-md overflow-hidden shadow-2xl border border-white/10">
+                <Image
+                  src={selectedImage.url}
+                  alt={selectedImage.name || "Foto completa"}
+                  fill
+                  className="object-contain"
+                  sizes="100vw"
+                  priority
+                />
+              </div>
+              {selectedImage.name && (
+                <p className="mt-4 text-white text-xl font-light tracking-wide text-center drop-shadow-lg">
+                  {selectedImage.name}
+                </p>
+              )}
+            </div>
+          </div>
+        )
+      }
+    </main >
   );
 }
